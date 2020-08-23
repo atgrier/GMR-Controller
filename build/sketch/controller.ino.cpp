@@ -41,11 +41,11 @@ int train_LEDS[] = {
 void setup();
 #line 79 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void loop();
-#line 166 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 169 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void getCurrentTrain();
-#line 185 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 188 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void eStop();
-#line 226 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 230 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void readEncoder();
 #line 39 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void setup()
@@ -100,9 +100,7 @@ void loop()
 
     // E-Stop trains, and reset speeds to zero
     if (push_button)
-    {
         eStop();
-    }
 
     // Get selected train
     // previous_train = current_train;
@@ -120,7 +118,12 @@ void loop()
     // Serial.println(digitalRead(ENCODER_BUTTON));
 
     // Allow selected train's speed to be changed
-    if (current_train != -1)
+    if (current_train == -1)
+    {
+        digitalWrite(INDICATOR_LED_0, LOW);
+        digitalWrite(INDICATOR_LED_1, LOW);
+    }
+    else
     {
         Serial.print("Current Train: ");
         Serial.println(current_train);
@@ -137,7 +140,7 @@ void loop()
         int current_encoder = encoder_val;
         Serial.print("Current Speed: ");
         Serial.println(current_encoder);
-        if (abs(current_encoder) < SPEED_DEADZONE)
+        if (abs(current_encoder) < SPEED_DEADZONE + 1)
         {
             trains[current_train].speed = 0;
             trains[current_train].direction = 1;
@@ -151,14 +154,14 @@ void loop()
             if (current_encoder < 0)
             {
                 trains[current_train].direction = -1;
-                digitalWrite(INDICATOR_LED_1, LOW);
-                digitalWrite(INDICATOR_LED_0, HIGH);
+                digitalWrite(INDICATOR_LED_0, LOW);
+                digitalWrite(INDICATOR_LED_1, HIGH);
                 digitalWrite(train_LEDS[current_train], HIGH);
             }
             else
             {
-                digitalWrite(INDICATOR_LED_0, LOW);
-                digitalWrite(INDICATOR_LED_1, HIGH);
+                digitalWrite(INDICATOR_LED_1, LOW);
+                digitalWrite(INDICATOR_LED_0, HIGH);
                 digitalWrite(train_LEDS[current_train], HIGH);
             }
         }
@@ -197,10 +200,11 @@ void getCurrentTrain()
 void eStop()
 {
     Serial.println("E Stopped");
-    digitalWrite(INDICATOR_LED_1, HIGH);
     digitalWrite(INDICATOR_LED_0, HIGH);
+    digitalWrite(INDICATOR_LED_1, HIGH);
+    previous_train = -1;
 
-    detachInterrupt(digitalPinToInterrupt(0));
+    // detachInterrupt(digitalPinToInterrupt(0));
     for (int i = 0; i < sizeof(trains); i++)
     {
         digitalWrite(train_LEDS[i], LOW);
@@ -232,7 +236,7 @@ void eStop()
     digitalWrite(INDICATOR_LED_0, LOW);
     digitalWrite(INDICATOR_LED_1, LOW);
     delay(1000);
-    attachInterrupt(0, readEncoder, CHANGE);
+    // attachInterrupt(0, readEncoder, CHANGE);
 }
 
 void readEncoder()
@@ -241,12 +245,13 @@ void readEncoder()
     int val2 = digitalRead(ENCODER_IN_2);
     int change = SPEED_CHANGE;
 
-    if (current_train != previous_train)
-        {
-            encoder_val = trains[current_train].speed * trains[current_train].direction;
-            previous_train = current_train;
-        }
-
+    // if (current_train != previous_train)
+    //     {
+    //         encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + 5)
+    //             * trains[current_train].direction;
+    //         // encoder_val = trains[current_train].speed * trains[current_train].direction;
+    //         previous_train = current_train;
+    //     }
 
     if (abs(encoder_val) <= SPEED_DEADZONE)
         change = max(change * SPEED_DEADZONE_MULT, 1);

@@ -89,9 +89,7 @@ void loop()
 
     // E-Stop trains, and reset speeds to zero
     if (push_button)
-    {
         eStop();
-    }
 
     // Get selected train
     // previous_train = current_train;
@@ -109,7 +107,12 @@ void loop()
     // Serial.println(digitalRead(ENCODER_BUTTON));
 
     // Allow selected train's speed to be changed
-    if (current_train != -1)
+    if (current_train == -1)
+    {
+        digitalWrite(6, 0x0);
+        digitalWrite(9, 0x0);
+    }
+    else
     {
         Serial.print("Current Train: ");
         Serial.println(current_train);
@@ -126,7 +129,7 @@ void loop()
         int current_encoder = encoder_val;
         Serial.print("Current Speed: ");
         Serial.println(current_encoder);
-        if (abs(current_encoder) < 5)
+        if (abs(current_encoder) < 5 + 1)
         {
             trains[current_train].speed = 0;
             trains[current_train].direction = 1;
@@ -140,14 +143,14 @@ void loop()
             if (current_encoder < 0)
             {
                 trains[current_train].direction = -1;
-                digitalWrite(9, 0x0);
-                digitalWrite(6, 0x1);
+                digitalWrite(6, 0x0);
+                digitalWrite(9, 0x1);
                 digitalWrite(train_LEDS[current_train], 0x1);
             }
             else
             {
-                digitalWrite(6, 0x0);
-                digitalWrite(9, 0x1);
+                digitalWrite(9, 0x0);
+                digitalWrite(6, 0x1);
                 digitalWrite(train_LEDS[current_train], 0x1);
             }
         }
@@ -186,10 +189,11 @@ void getCurrentTrain()
 void eStop()
 {
     Serial.println("E Stopped");
-    digitalWrite(9, 0x1);
     digitalWrite(6, 0x1);
+    digitalWrite(9, 0x1);
+    previous_train = -1;
 
-    detachInterrupt(((0) == 0 ? 2 : ((0) == 1 ? 3 : ((0) == 2 ? 1 : ((0) == 3 ? 0 : ((0) == 7 ? 4 : -1))))));
+    // detachInterrupt(digitalPinToInterrupt(0));
     for (int i = 0; i < sizeof(trains); i++)
     {
         digitalWrite(train_LEDS[i], 0x0);
@@ -221,7 +225,7 @@ void eStop()
     digitalWrite(6, 0x0);
     digitalWrite(9, 0x0);
     delay(1000);
-    attachInterrupt(0, readEncoder, 1);
+    // attachInterrupt(0, readEncoder, CHANGE);
 }
 
 void readEncoder()
@@ -230,12 +234,13 @@ void readEncoder()
     int val2 = digitalRead(3);
     int change = 2;
 
-    if (current_train != previous_train)
-        {
-            encoder_val = trains[current_train].speed * trains[current_train].direction;
-            previous_train = current_train;
-        }
-
+    // if (current_train != previous_train)
+    //     {
+    //         encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + 5)
+    //             * trains[current_train].direction;
+    //         // encoder_val = trains[current_train].speed * trains[current_train].direction;
+    //         previous_train = current_train;
+    //     }
 
     if (abs(encoder_val) <= 5)
         change = ((change * 0.5)>(1)?(change * 0.5):(1));
