@@ -9,12 +9,6 @@ RHReliableDatagram manager(driver, CLIENT_ADDRESS);
 uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 int encoder_val = 0;
-// int encoder_vals[] = {
-//     0,
-//     0,
-//     0,
-//     0
-// };
 
 int current_train;
 int previous_train;
@@ -83,8 +77,6 @@ void loop()
         push_button = false;
     else
         push_button = true;
-    // Serial.print("Push BUTTON: ");
-    // Serial.println(digitalRead(PUSH_BUTTON));
 
     // E-Stop trains, and reset speeds to zero
     if (push_button)
@@ -94,16 +86,11 @@ void loop()
     // previous_train = current_train;
     getCurrentTrain();
 
-    // Serial.print("Current Train: ");
-    // Serial.println(current_train);
-
     // Get encoder button
     if (digitalRead(ENCODER_BUTTON))
         encoder_button = false;
     else
         encoder_button = true;
-    // Serial.print("Encoder Button: ");
-    // Serial.println(digitalRead(ENCODER_BUTTON));
 
     // Allow selected train's speed to be changed
     if (current_train == -1)
@@ -117,10 +104,8 @@ void loop()
         Serial.println(current_train);
         if (current_train != previous_train)
         {
-            // detachInterrupt(digitalPinToInterrupt(0));
             encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + 5)
                 * trains[current_train].direction;
-            // attachInterrupt(0, readEncoder, CHANGE);
             previous_train = current_train;
         }
 
@@ -210,12 +195,8 @@ void eStop()
     //     }
 
     e_stop_timer = millis();
-    // Serial.println(e_stop_timer);
-    // Serial.println(millis());
-    // Serial.println(millis() - e_stop_timer);
     while (millis() - e_stop_timer < ESTOP_DURATION)
     {
-        // Serial.println("E Stop Loop");
         if (digitalRead(PUSH_BUTTON))
             e_stop_timer = millis();
         delay(100);
@@ -232,14 +213,6 @@ void readEncoder()
     int val1 = digitalRead(ENCODER_IN_1);
     int val2 = digitalRead(ENCODER_IN_2);
     int change = SPEED_CHANGE;
-
-    // if (current_train != previous_train)
-    //     {
-    //         encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + 5)
-    //             * trains[current_train].direction;
-    //         // encoder_val = trains[current_train].speed * trains[current_train].direction;
-    //         previous_train = current_train;
-    //     }
 
     if (abs(encoder_val) <= SPEED_DEADZONE)
         change = max(change * SPEED_DEADZONE_MULT, 1);
