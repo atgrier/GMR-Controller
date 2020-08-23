@@ -1,30 +1,39 @@
+// Radio parameters
 #define CLIENT_ADDRESS 101
 #define RF69_FREQ 868.0
 #define RFM69_CS 8
 #define RFM69_INT 7
 
+// Rotary encoder inputs
 #define ENCODER_BUTTON A4
 #define ENCODER_IN_1 2
 #define ENCODER_IN_2 3
 
+// Outputs for selector switch red LEDs
 #define TRAIN_LED_0 10
 #define TRAIN_LED_1 11
 #define TRAIN_LED_2 12
 #define TRAIN_LED_3 13
 
+// Inputs for selector switch
 #define TRAIN_SELECTOR_0 A1
 #define TRAIN_SELECTOR_1 A0
 #define TRAIN_SELECTOR_2 A3
 #define TRAIN_SELECTOR_3 A2
 
+// Push button input
 #define PUSH_BUTTON A5
+
+// Red/Blue indicator LED outputs
 #define INDICATOR_LED_0 6
 #define INDICATOR_LED_1 9
 
+// Encoder and speed parameters
 #define SPEED_CHANGE 2
 #define SPEED_DEADZONE 5
 #define SPEED_DEADZONE_MULT 0.5
 #define SPEED_MAX 126
 #define ENCODER_MAX (SPEED_MAX + SPEED_DEADZONE)
 
+// Button push time required (milliseconds) to leave e-stop mode
 #define ESTOP_DURATION 2000
