@@ -28,12 +28,18 @@
 #define INDICATOR_LED_0 6
 #define INDICATOR_LED_1 9
 
+// Indicator LED states
+#define FORWARDS 0
+#define REVERSE 1
+#define IDLE 3
+#define WARNING 4
+
 // Encoder and speed parameters
-#define SPEED_CHANGE 2
-#define SPEED_DEADZONE 5
-#define SPEED_DEADZONE_MULT 0.5
-#define SPEED_MAX 126
-#define ENCODER_MAX (SPEED_MAX + SPEED_DEADZONE)
+#define SPEED_CHANGE 2  // Amount to change encoder for a single step
+#define SPEED_DEADZONE 5  // Size of encoder deadzone when calculating speed, +/- from zero
+#define SPEED_DEADZONE_MULT 0.5  // Modify how much each step changes encoder value in deadzone
+#define SPEED_MAX 126  // Maximum speed (parameter of motor controller or DCC decoder)
+#define ENCODER_MAX (SPEED_MAX + SPEED_DEADZONE)  // Maximum encoder value
 
 // Button push time required (milliseconds) to leave e-stop mode
 #define ESTOP_DURATION 2000

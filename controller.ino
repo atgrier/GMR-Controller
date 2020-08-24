@@ -14,7 +14,6 @@ int current_train;
 int previous_train;
 bool push_button;
 bool encoder_button;
-bool e_stopped;
 uint32_t e_stop_timer;
 
 Train trains[] = {
@@ -67,12 +66,11 @@ void setup()
     // Initialize variables
     getCurrentTrain();
     previous_train = current_train;
-    e_stopped = false;
 }
 
 void loop()
 {
-    // Get push button
+    // Get push button state
     if (digitalRead(PUSH_BUTTON))
         push_button = false;
     else
@@ -85,27 +83,30 @@ void loop()
     // Get selected train
     // previous_train = current_train;
     getCurrentTrain();
+    Serial.print("Current Train: ");
+    Serial.println(current_train);
 
-    // Get encoder button
+    // Get encoder button state
     if (digitalRead(ENCODER_BUTTON))
         encoder_button = false;
     else
         encoder_button = true;
 
-    // Allow selected train's speed to be changed
+    // Invalid train selected (switch has 8 positions)
     if (current_train == -1)
-    {
-        digitalWrite(INDICATOR_LED_0, LOW);
-        digitalWrite(INDICATOR_LED_1, LOW);
-    }
+        indicatorLED(IDLE, false);
+
+    // Valid train selected
     else
     {
-        Serial.print("Current Train: ");
-        Serial.println(current_train);
+        // If the selected train has changed, update encoder value based on speed of newly
+        // selected train.
+        // If train is stopped, set encoder to zero
+        // Otherwise set encoder to (speed + deadzone) * direction
         if (current_train != previous_train)
         {
-            encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + 5)
-                * trains[current_train].direction;
+            encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
+                           SPEED_DEADZONE) * trains[current_train].direction;
             previous_train = current_train;
         }
 
@@ -113,29 +114,32 @@ void loop()
         int current_encoder = encoder_val;
         Serial.print("Current Speed: ");
         Serial.println(current_encoder);
+
+        // Inside deadzone, set speed to zero
         if (abs(current_encoder) < SPEED_DEADZONE + 1)
         {
             trains[current_train].speed = 0;
             trains[current_train].direction = 1;
-            digitalWrite(INDICATOR_LED_0, LOW);
-            digitalWrite(INDICATOR_LED_1, LOW);
-            digitalWrite(train_LEDS[current_train], LOW);
+            indicatorLED(IDLE, true);
         }
+
+        // Train is moving! Set the speed as abs(encoder) - deadzone
         else
         {
             trains[current_train].speed = abs(current_encoder) < SPEED_DEADZONE ? 0 : abs(current_encoder) - 5;
+
+            // Reverse
             if (current_encoder < 0)
             {
                 trains[current_train].direction = -1;
-                digitalWrite(INDICATOR_LED_0, LOW);
-                digitalWrite(INDICATOR_LED_1, HIGH);
-                digitalWrite(train_LEDS[current_train], HIGH);
+                indicatorLED(REVERSE, true);
             }
+
+            // Forwards
             else
             {
-                digitalWrite(INDICATOR_LED_1, LOW);
-                digitalWrite(INDICATOR_LED_0, HIGH);
-                digitalWrite(train_LEDS[current_train], HIGH);
+                trains[current_train].direction = 1;
+                indicatorLED(FORWARDS, true);
             }
         }
     }
@@ -151,13 +155,10 @@ void loop()
     delay(100);
 }
 
+
+// Get the currently selected locomotive
 void getCurrentTrain()
 {
-    Serial.println("Train Selectors:");
-    Serial.println(digitalRead(TRAIN_SELECTOR_0));
-    Serial.println(digitalRead(TRAIN_SELECTOR_1));
-    Serial.println(digitalRead(TRAIN_SELECTOR_2));
-    Serial.println(digitalRead(TRAIN_SELECTOR_3));
     if (digitalRead(TRAIN_SELECTOR_0))
         current_train = 0;
     else if (digitalRead(TRAIN_SELECTOR_1))
@@ -170,14 +171,50 @@ void getCurrentTrain()
         current_train = -1;
 }
 
+
+// Set indicator LED
+void indicatorLED(int state, bool writeTrainLED)
+{
+    if (state == FORWARDS)
+    {
+        digitalWrite(INDICATOR_LED_1, LOW);
+        digitalWrite(INDICATOR_LED_0, HIGH);
+        if (writeTrainLED)
+            digitalWrite(train_LEDS[current_train], HIGH);
+    }
+
+    else if (state == REVERSE)
+    {
+        digitalWrite(INDICATOR_LED_0, LOW);
+        digitalWrite(INDICATOR_LED_1, HIGH);
+        if (writeTrainLED)
+            digitalWrite(train_LEDS[current_train], HIGH);
+    }
+
+    else if (state == IDLE)
+    {
+        digitalWrite(INDICATOR_LED_0, LOW);
+        digitalWrite(INDICATOR_LED_1, LOW);
+        if (writeTrainLED)
+            digitalWrite(train_LEDS[current_train], LOW);
+    }
+
+    else if (state == WARNING)
+    {
+        digitalWrite(INDICATOR_LED_0, HIGH);
+        digitalWrite(INDICATOR_LED_1, HIGH);
+    }
+}
+
+
+// Trigger E-Stop to stop all locomotives and idle until reset command recieved
 void eStop()
 {
     Serial.println("E Stopped");
-    digitalWrite(INDICATOR_LED_0, HIGH);
-    digitalWrite(INDICATOR_LED_1, HIGH);
+    indicatorLED(WARNING, false);
     previous_train = -1;
 
-    // detachInterrupt(digitalPinToInterrupt(0));
+    // Set all trains' speeds to zero
     for (int i = 0; i < sizeof(trains); i++)
     {
         digitalWrite(train_LEDS[i], LOW);
@@ -185,7 +222,7 @@ void eStop()
         trains[i].direction = 1;
     }
 
-    // // Send command several times to ensure engines receive it
+    // // Send stop command several times to ensure engines receive it
     // for (int i = 0; i < 5; i++)
     //     for (Train& train : trains)
     //     {
@@ -194,6 +231,7 @@ void eStop()
     //         // manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
     //     }
 
+    // Reset command is holding e-stop button continuously for the duration (2000 milliseconds)
     e_stop_timer = millis();
     while (millis() - e_stop_timer < ESTOP_DURATION)
     {
@@ -202,32 +240,40 @@ void eStop()
         delay(100);
     }
 
-    digitalWrite(INDICATOR_LED_0, LOW);
-    digitalWrite(INDICATOR_LED_1, LOW);
+    indicatorLED(IDLE, false);
     delay(1000);
-    // attachInterrupt(0, readEncoder, CHANGE);
 }
 
+
+// Interrupt service routine to get updated encoder values
+// Should be triggered on `CHANGE`
 void readEncoder()
 {
     int val1 = digitalRead(ENCODER_IN_1);
     int val2 = digitalRead(ENCODER_IN_2);
     int change = SPEED_CHANGE;
 
+    // Inside deadzone, traverse slower
     if (abs(encoder_val) <= SPEED_DEADZONE)
         change = max(change * SPEED_DEADZONE_MULT, 1);
 
+
+    // Decrease value
     if (val1 != val2)
     {
         encoder_val -= change;
+        // When less than the minimum permissible value, reset to that minimum value.
         if (encoder_val < ENCODER_MAX * -1)
             encoder_val = ENCODER_MAX * -1;
     }
+
+    // Increase value
     else
     {
         encoder_val += change;
+        // When greater than the maximum permissible value, reset to that maximum value.
         if (encoder_val > ENCODER_MAX)
             encoder_val = ENCODER_MAX;
     }
-
+    // Serial.println(encoder_val);
 }
