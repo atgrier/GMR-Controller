@@ -10,6 +10,7 @@ RHReliableDatagram manager(driver, 101);
 uint8_t buf[(64 - 4)];
 
 int encoder_val = 0;
+// bool encoder_val_locked = false;
 
 int current_train;
 int previous_train;
@@ -47,7 +48,6 @@ void setup()
     pinMode(A4, 0x2);
     pinMode(2, 0x2);
     pinMode(3, 0x2);
-    attachInterrupt(0, readEncoder, 1);
 
     // Train Selector
     pinMode(A1, 0x0);
@@ -67,6 +67,9 @@ void setup()
     // Initialize variables
     getCurrentTrain();
     previous_train = current_train;
+
+    // Enable interrupt
+    attachInterrupt(0, readEncoder, 1);
 }
 
 void loop()
@@ -106,9 +109,11 @@ void loop()
         // Otherwise set encoder to (speed + deadzone) * direction
         if (current_train != previous_train)
         {
+            // encoder_val_locked = true;
             encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
                            5 /* Size of encoder deadzone when calculating speed, +/- from zero*/) * trains[current_train].direction;
             previous_train = current_train;
+            // encoder_val_locked = false;
         }
 
         // Get new speed and direction
@@ -146,12 +151,12 @@ void loop()
     }
 
     // Create and send commands
-    // for (Train& train : trains)
-    // {
-    //     char pdata[100];
-    //     sprintf(pdata, "<t 1 3 %d %d>", train.speed, train.direction);
-    //     manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
-    // }
+    for (Train& train : trains)
+    {
+        char pdata[100];
+        sprintf(pdata, "<t 1 3 %d %d>", train.speed, train.direction);
+        manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
+    }
 
     delay(100);
 }
@@ -170,6 +175,7 @@ void getCurrentTrain()
         current_train = 3;
     else
         current_train = -1;
+    delay(1); // Needed in order to exit e-stop condition properly. Don't ask why
 }
 
 
@@ -223,14 +229,14 @@ void eStop()
         trains[i].direction = 1;
     }
 
-    // // Send stop command several times to ensure engines receive it
-    // for (int i = 0; i < 5; i++)
-    //     for (Train& train : trains)
-    //     {
-    //         char pdata[100];
-    //         sprintf(pdata, "<t 1 3 -1 1>");
-    //         // manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
-    //     }
+    // Send stop command several times to ensure engines receive it
+    for (int i = 0; i < 5; i++)
+        for (Train& train : trains)
+        {
+            char pdata[100];
+            sprintf(pdata, "<t 1 3 -1 1>");
+            manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
+        }
 
     // Reset command is holding e-stop button continuously for the duration (2000 milliseconds)
     e_stop_timer = millis();
@@ -250,6 +256,9 @@ void eStop()
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
+    // if (encoder_val_locked)
+    //     return;
+    // {
     int val1 = digitalRead(2);
     int val2 = digitalRead(3);
     int change = 2 /* Amount to change encoder for a single step*/;
@@ -277,4 +286,5 @@ void readEncoder()
             encoder_val = (126 /* Maximum speed (parameter of motor controller or DCC decoder)*/ + 5 /* Size of encoder deadzone when calculating speed, +/- from zero*/) /* Maximum encoder value*/;
     }
     // Serial.println(encoder_val);
+    // }
 }
