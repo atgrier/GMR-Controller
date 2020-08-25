@@ -10,7 +10,6 @@ RHReliableDatagram manager(driver, CLIENT_ADDRESS);
 uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 int encoder_val = 0;
-// bool encoder_val_locked = false;
 
 int current_train;
 int previous_train;
@@ -31,19 +30,19 @@ int train_LEDS[] = {
     TRAIN_LED_2,
     TRAIN_LED_3};
 
-#line 33 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 32 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void setup();
-#line 74 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 73 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void loop();
-#line 165 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 162 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void getCurrentTrain();
-#line 182 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 179 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void indicatorLED(int state, bool writeTrainLED);
-#line 217 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 214 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void eStop();
-#line 256 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 253 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void readEncoder();
-#line 33 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 32 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void setup()
 {
     // Radio Module
@@ -122,11 +121,9 @@ void loop()
         // Otherwise set encoder to (speed + deadzone) * direction
         if (current_train != previous_train)
         {
-            // encoder_val_locked = true;
             encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
                            SPEED_DEADZONE) * trains[current_train].direction;
             previous_train = current_train;
-            // encoder_val_locked = false;
         }
 
         // Get new speed and direction
@@ -269,9 +266,6 @@ void eStop()
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
-    // if (encoder_val_locked)
-    //     return;
-    // {
     int val1 = digitalRead(ENCODER_IN_1);
     int val2 = digitalRead(ENCODER_IN_2);
     int change = SPEED_CHANGE;
@@ -298,7 +292,5 @@ void readEncoder()
         if (encoder_val > ENCODER_MAX)
             encoder_val = ENCODER_MAX;
     }
-    // Serial.println(encoder_val);
-    // }
 }
 

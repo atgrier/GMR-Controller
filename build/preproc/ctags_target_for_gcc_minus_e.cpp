@@ -10,7 +10,6 @@ RHReliableDatagram manager(driver, 101);
 uint8_t buf[(64 - 4)];
 
 int encoder_val = 0;
-// bool encoder_val_locked = false;
 
 int current_train;
 int previous_train;
@@ -109,11 +108,9 @@ void loop()
         // Otherwise set encoder to (speed + deadzone) * direction
         if (current_train != previous_train)
         {
-            // encoder_val_locked = true;
             encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
                            5 /* Size of encoder deadzone when calculating speed, +/- from zero*/) * trains[current_train].direction;
             previous_train = current_train;
-            // encoder_val_locked = false;
         }
 
         // Get new speed and direction
@@ -256,9 +253,6 @@ void eStop()
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
-    // if (encoder_val_locked)
-    //     return;
-    // {
     int val1 = digitalRead(2);
     int val2 = digitalRead(3);
     int change = 2 /* Amount to change encoder for a single step*/;
@@ -285,6 +279,4 @@ void readEncoder()
         if (encoder_val > (126 /* Maximum speed (parameter of motor controller or DCC decoder)*/ + 5 /* Size of encoder deadzone when calculating speed, +/- from zero*/) /* Maximum encoder value*/)
             encoder_val = (126 /* Maximum speed (parameter of motor controller or DCC decoder)*/ + 5 /* Size of encoder deadzone when calculating speed, +/- from zero*/) /* Maximum encoder value*/;
     }
-    // Serial.println(encoder_val);
-    // }
 }
