@@ -66,9 +66,10 @@ void setup()
     // Initialize variables
     getCurrentTrain();
     previous_train = current_train;
+    indicatorLED(2);
 
     // Enable interrupt
-    attachInterrupt(0, readEncoder, 1);
+    attachInterrupt(1, readEncoder, 1);
 }
 
 void loop()
@@ -97,7 +98,7 @@ void loop()
 
     // Invalid train selected (switch has 8 positions)
     if (current_train == -1)
-        indicatorLED(3, false);
+        indicatorLED(3);
 
     // Valid train selected
     else
@@ -106,6 +107,15 @@ void loop()
         // selected train.
         // If train is stopped, set encoder to zero
         // Otherwise set encoder to (speed + deadzone) * direction
+        (
+# 109 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+       (*(volatile uint8_t *)((0x1D) + 0x20)) 
+# 109 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+       &= ~((1UL << (
+# 109 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+       1
+# 109 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+       ))));
         if (current_train != previous_train)
         {
             encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
@@ -123,7 +133,7 @@ void loop()
         {
             trains[current_train].speed = 0;
             trains[current_train].direction = 1;
-            indicatorLED(3, true);
+            indicatorLED(2);
         }
 
         // Train is moving! Set the speed as abs(encoder) - deadzone
@@ -135,16 +145,25 @@ void loop()
             if (current_encoder < 0)
             {
                 trains[current_train].direction = -1;
-                indicatorLED(1, true);
+                indicatorLED(1);
             }
 
             // Forwards
             else
             {
                 trains[current_train].direction = 1;
-                indicatorLED(0, true);
+                indicatorLED(0);
             }
         }
+        (
+# 149 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+       (*(volatile uint8_t *)((0x1D) + 0x20)) 
+# 149 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+       |= (1UL << (
+# 149 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+       1
+# 149 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+       )));
     }
 
     // Create and send commands
@@ -162,6 +181,15 @@ void loop()
 // Get the currently selected locomotive
 void getCurrentTrain()
 {
+    (
+# 167 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   (*(volatile uint8_t *)((0x1D) + 0x20)) 
+# 167 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   &= ~((1UL << (
+# 167 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   1
+# 167 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   ))));
     if (digitalRead(A1))
         current_train = 0;
     else if (digitalRead(A0))
@@ -172,41 +200,60 @@ void getCurrentTrain()
         current_train = 3;
     else
         current_train = -1;
-    delay(1); // Needed in order to exit e-stop condition properly. Don't ask why
+    if (current_train != previous_train)
+        indicatorLED(5);
+    (
+# 180 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   (*(volatile uint8_t *)((0x1D) + 0x20)) 
+# 180 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   |= (1UL << (
+# 180 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   1
+# 180 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   )));
 }
 
 
 // Set indicator LED
-void indicatorLED(int state, bool writeTrainLED)
+void indicatorLED(int state)
 {
     if (state == 0)
     {
         digitalWrite(9, 0x0);
-        digitalWrite(6, 0x1);
-        if (writeTrainLED)
-            digitalWrite(train_LEDS[current_train], 0x1);
+        analogWrite(6, map(trains[current_train].speed, 0, 126 /* Maximum speed (parameter of motor controller or DCC decoder)*/, 0, 255));
+        digitalWrite(train_LEDS[current_train], (trains[current_train].speed == 126 /* Maximum speed (parameter of motor controller or DCC decoder)*/) ? 0x1 : 0x0);
     }
 
     else if (state == 1)
     {
         digitalWrite(6, 0x0);
-        digitalWrite(9, 0x1);
-        if (writeTrainLED)
-            digitalWrite(train_LEDS[current_train], 0x1);
+        analogWrite(9, map(trains[current_train].speed, 0, 126 /* Maximum speed (parameter of motor controller or DCC decoder)*/, 0, 255));
+        digitalWrite(train_LEDS[current_train], (trains[current_train].speed == 126 /* Maximum speed (parameter of motor controller or DCC decoder)*/) ? 0x1 : 0x0);
+    }
+
+    else if (state == 2)
+    {
+        digitalWrite(6, 0x0);
+        digitalWrite(9, 0x0);
+        digitalWrite(train_LEDS[current_train], 0x0);
     }
 
     else if (state == 3)
     {
         digitalWrite(6, 0x0);
         digitalWrite(9, 0x0);
-        if (writeTrainLED)
-            digitalWrite(train_LEDS[current_train], 0x0);
     }
 
     else if (state == 4)
     {
         digitalWrite(6, 0x1);
         digitalWrite(9, 0x1);
+    }
+
+    else if (state == 5);
+    {
+        if (previous_train == -1 || trains[previous_train].speed == 0) return;
+        digitalWrite(train_LEDS[previous_train], 0x1);
     }
 }
 
@@ -215,11 +262,20 @@ void indicatorLED(int state, bool writeTrainLED)
 void eStop()
 {
     Serial.println("E Stopped");
-    indicatorLED(4, false);
+    indicatorLED(4);
+    (
+# 233 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   (*(volatile uint8_t *)((0x1D) + 0x20)) 
+# 233 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   &= ~((1UL << (
+# 233 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   1
+# 233 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   ))));
     previous_train = -1;
 
     // Set all trains' speeds to zero
-    for (int i = 0; i < sizeof(trains); i++)
+    for (int i = 0; i < ((int) (sizeof(trains) / sizeof(Train))); i++)
     {
         digitalWrite(train_LEDS[i], 0x0);
         trains[i].speed = 0;
@@ -244,8 +300,17 @@ void eStop()
         delay(100);
     }
 
-    indicatorLED(3, false);
+    indicatorLED(3);
     delay(1000);
+    (
+# 264 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   (*(volatile uint8_t *)((0x1D) + 0x20)) 
+# 264 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   |= (1UL << (
+# 264 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino" 3
+   1
+# 264 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+   )));
 }
 
 
@@ -253,6 +318,8 @@ void eStop()
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
+    if (current_train < 0) return;
+
     int val1 = digitalRead(2);
     int val2 = digitalRead(3);
     int change = 2 /* Amount to change encoder for a single step*/;

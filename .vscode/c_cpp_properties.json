@@ -10,12 +10,15 @@
                 "C:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\libraries\\Motor",
                 "C:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\libraries\\RadioHead",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\circuitplay32u4",
-                "C:\\Users\\Alan\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\avr\\1.4.13\\**"
+                "C:\\Users\\Alan\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\avr\\1.4.13\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\libraries\\**"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "USBCON"
             ],
             "intelliSenseMode": "msvc-x64",
             "forcedInclude": []

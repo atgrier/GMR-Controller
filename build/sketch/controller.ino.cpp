@@ -32,15 +32,15 @@ int train_LEDS[] = {
 
 #line 32 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void setup();
-#line 73 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 74 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void loop();
-#line 162 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 165 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void getCurrentTrain();
-#line 179 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
-void indicatorLED(int state, bool writeTrainLED);
-#line 214 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 185 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+void indicatorLED(int state);
+#line 229 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void eStop();
-#line 253 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
+#line 270 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void readEncoder();
 #line 32 "c:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\wireless_loco\\controller\\controller.ino"
 void setup()
@@ -79,9 +79,10 @@ void setup()
     // Initialize variables
     getCurrentTrain();
     previous_train = current_train;
+    indicatorLED(STOP);
 
     // Enable interrupt
-    attachInterrupt(0, readEncoder, CHANGE);
+    attachInterrupt(1, readEncoder, CHANGE);
 }
 
 void loop()
@@ -110,7 +111,7 @@ void loop()
 
     // Invalid train selected (switch has 8 positions)
     if (current_train == -1)
-        indicatorLED(IDLE, false);
+        indicatorLED(IDLE);
 
     // Valid train selected
     else
@@ -119,6 +120,7 @@ void loop()
         // selected train.
         // If train is stopped, set encoder to zero
         // Otherwise set encoder to (speed + deadzone) * direction
+        DISABLE_readEncoder;
         if (current_train != previous_train)
         {
             encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
@@ -136,7 +138,7 @@ void loop()
         {
             trains[current_train].speed = 0;
             trains[current_train].direction = 1;
-            indicatorLED(IDLE, true);
+            indicatorLED(STOP);
         }
 
         // Train is moving! Set the speed as abs(encoder) - deadzone
@@ -148,16 +150,17 @@ void loop()
             if (current_encoder < 0)
             {
                 trains[current_train].direction = -1;
-                indicatorLED(REVERSE, true);
+                indicatorLED(REVERSE);
             }
 
             // Forwards
             else
             {
                 trains[current_train].direction = 1;
-                indicatorLED(FORWARDS, true);
+                indicatorLED(FORWARDS);
             }
         }
+        ENABLE_readEncoder;
     }
 
     // Create and send commands
@@ -175,6 +178,7 @@ void loop()
 // Get the currently selected locomotive
 void getCurrentTrain()
 {
+    DISABLE_readEncoder;
     if (digitalRead(TRAIN_SELECTOR_0))
         current_train = 0;
     else if (digitalRead(TRAIN_SELECTOR_1))
@@ -185,41 +189,52 @@ void getCurrentTrain()
         current_train = 3;
     else
         current_train = -1;
-    delay(1);  // Needed in order to exit e-stop condition properly. Don't ask why
+    if (current_train != previous_train)
+        indicatorLED(RUNNING);
+    ENABLE_readEncoder;
 }
 
 
 // Set indicator LED
-void indicatorLED(int state, bool writeTrainLED)
+void indicatorLED(int state)
 {
     if (state == FORWARDS)
     {
         digitalWrite(INDICATOR_LED_1, LOW);
-        digitalWrite(INDICATOR_LED_0, HIGH);
-        if (writeTrainLED)
-            digitalWrite(train_LEDS[current_train], HIGH);
+        analogWrite(INDICATOR_LED_0, map(trains[current_train].speed, 0, SPEED_MAX, 0, 255));
+        digitalWrite(train_LEDS[current_train], (trains[current_train].speed == SPEED_MAX) ? HIGH : LOW);
     }
 
     else if (state == REVERSE)
     {
         digitalWrite(INDICATOR_LED_0, LOW);
-        digitalWrite(INDICATOR_LED_1, HIGH);
-        if (writeTrainLED)
-            digitalWrite(train_LEDS[current_train], HIGH);
+        analogWrite(INDICATOR_LED_1, map(trains[current_train].speed, 0, SPEED_MAX, 0, 255));
+        digitalWrite(train_LEDS[current_train], (trains[current_train].speed == SPEED_MAX) ? HIGH : LOW);
+    }
+
+    else if (state == STOP)
+    {
+        digitalWrite(INDICATOR_LED_0, LOW);
+        digitalWrite(INDICATOR_LED_1, LOW);
+        digitalWrite(train_LEDS[current_train], LOW);
     }
 
     else if (state == IDLE)
     {
         digitalWrite(INDICATOR_LED_0, LOW);
         digitalWrite(INDICATOR_LED_1, LOW);
-        if (writeTrainLED)
-            digitalWrite(train_LEDS[current_train], LOW);
     }
 
     else if (state == WARNING)
     {
         digitalWrite(INDICATOR_LED_0, HIGH);
         digitalWrite(INDICATOR_LED_1, HIGH);
+    }
+
+    else if (state == RUNNING);
+    {
+        if (previous_train == -1 || trains[previous_train].speed == 0) return;
+        digitalWrite(train_LEDS[previous_train], HIGH);
     }
 }
 
@@ -228,11 +243,12 @@ void indicatorLED(int state, bool writeTrainLED)
 void eStop()
 {
     Serial.println("E Stopped");
-    indicatorLED(WARNING, false);
+    indicatorLED(WARNING);
+    DISABLE_readEncoder;
     previous_train = -1;
 
     // Set all trains' speeds to zero
-    for (int i = 0; i < sizeof(trains); i++)
+    for (int i = 0; i < NUM_TRAINS; i++)
     {
         digitalWrite(train_LEDS[i], LOW);
         trains[i].speed = 0;
@@ -257,8 +273,9 @@ void eStop()
         delay(100);
     }
 
-    indicatorLED(IDLE, false);
+    indicatorLED(IDLE);
     delay(1000);
+    ENABLE_readEncoder;
 }
 
 
@@ -266,6 +283,8 @@ void eStop()
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
+    if (current_train < 0) return;
+
     int val1 = digitalRead(ENCODER_IN_1);
     int val2 = digitalRead(ENCODER_IN_2);
     int change = SPEED_CHANGE;

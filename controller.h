@@ -31,8 +31,10 @@
 // Indicator LED states
 #define FORWARDS 0
 #define REVERSE 1
+#define STOP 2
 #define IDLE 3
 #define WARNING 4
+#define RUNNING 5
 
 // Encoder and speed parameters
 #define SPEED_CHANGE 2  // Amount to change encoder for a single step
@@ -43,3 +45,9 @@
 
 // Button push time required (milliseconds) to leave e-stop mode
 #define ESTOP_DURATION 2000
+
+// Interrupt control
+#define ENABLE_readEncoder  (EIMSK |= bit (INT1))
+#define DISABLE_readEncoder (EIMSK &= ~(bit (INT1)))
+
+#define NUM_TRAINS ((int) (sizeof(trains) / sizeof(Locomotive)))
