@@ -60,8 +60,12 @@
 #define ENABLE_readEncoder (EIMSK |= bit(INT1))
 #define DISABLE_readEncoder (EIMSK &= ~(bit(INT1)))
 
-// Macro for quickly determining the number of trains
+// Miscellaneous macros
 #define NUM_TRAINS ((int)(sizeof(trains) / sizeof(Locomotive)))
+#define GET_SPEED abs(current_encoder) < SPEED_DEADZONE ? 0 : abs(current_encoder) - 5
+#define TRAIN_SPEED trains[current_train].speed()
+#define TRAIN_DIRECTION trains[current_train].direction()
+#define TRAIN_LED trains[current_train].ledPin()
 
 // Radio initialization
 RH_RF69 driver(RFM69_CS, RFM69_INT);
@@ -78,15 +82,8 @@ uint32_t e_stop_timer;
 
 // List of all trains operated by this controller
 Locomotive trains[] = {
-    Locomotive(201), // DB Steam
-    Locomotive(202), // Great Norther Steam
-    Locomotive(203), // RhB Ge 6/6 1 (Crocodile)
-    Locomotive(204)  // Stainz
+    Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
+    Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
+    Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
+    Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
 };
-
-// List of status LED's corresponding to each train
-int train_LEDS[] = {
-    TRAIN_LED_0,
-    TRAIN_LED_1,
-    TRAIN_LED_2,
-    TRAIN_LED_3};

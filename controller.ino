@@ -50,10 +50,7 @@ void setup()
 void loop()
 {
     // Get push button state
-    if (digitalRead(PUSH_BUTTON))
-        push_button = false;
-    else
-        push_button = true;
+    push_button = !digitalRead(PUSH_BUTTON);
 
     // E-Stop trains, and reset speeds to zero
     if (push_button)
@@ -66,10 +63,7 @@ void loop()
     Serial.println(current_train);
 
     // Get encoder button state
-    if (digitalRead(ENCODER_BUTTON))
-        encoder_button = false;
-    else
-        encoder_button = true;
+    encoder_button = !digitalRead(ENCODER_BUTTON);
 
     // Invalid train selected (switch has 8 positions)
     if (current_train == -1)
@@ -85,7 +79,8 @@ void loop()
         DISABLE_readEncoder;
         if (current_train != previous_train)
         {
-            encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + SPEED_DEADZONE) * trains[current_train].direction;
+            int current_speed = TRAIN_SPEED;
+            encoder_val = (current_speed == 0 ? 0 : current_speed + SPEED_DEADZONE) * TRAIN_DIRECTION;
             previous_train = current_train;
         }
 
@@ -97,15 +92,15 @@ void loop()
         // Inside deadzone, set speed to zero
         if (abs(current_encoder) < SPEED_DEADZONE + 1)
         {
-            trains[current_train].speed = 0;
-            trains[current_train].direction = 1;
+            trains[current_train].setSpeed(0);
+            trains[current_train].forward();
             indicatorLED(STOP);
         }
 
         // Train is moving! Set the speed as abs(encoder) - deadzone
         else
         {
-            trains[current_train].speed = abs(current_encoder) < SPEED_DEADZONE ? 0 : abs(current_encoder) - 5;
+            trains[current_train].setSpeed(GET_SPEED);
 
             // Reverse
             if (current_encoder < 0)
@@ -126,13 +121,7 @@ void loop()
 
     // Create and send commands
     for (Locomotive &train : trains)
-    {
-        char pdata[3];
-        pdata[0] = 't';             // Throttle
-        pdata[1] = train.speed;     // Speed
-        pdata[2] = train.direction; // Direction
-        manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.address);
-    }
+        train.sendThrottle();
 
     delay(100);
 }
@@ -162,22 +151,22 @@ void indicatorLED(int state)
     if (state == FORWARDS)
     {
         digitalWrite(INDICATOR_LED_1, LOW);
-        analogWrite(INDICATOR_LED_0, map(trains[current_train].speed, 0, SPEED_MAX, 0, 255));
-        digitalWrite(train_LEDS[current_train], (trains[current_train].speed == SPEED_MAX) ? HIGH : LOW);
+        analogWrite(INDICATOR_LED_0, map(TRAIN_SPEED, 0, SPEED_MAX, 0, 255));
+        digitalWrite(TRAIN_LED, (TRAIN_SPEED == SPEED_MAX) ? HIGH : LOW);
     }
 
     else if (state == REVERSE)
     {
         digitalWrite(INDICATOR_LED_0, LOW);
-        analogWrite(INDICATOR_LED_1, map(trains[current_train].speed, 0, SPEED_MAX, 0, 255));
-        digitalWrite(train_LEDS[current_train], (trains[current_train].speed == SPEED_MAX) ? HIGH : LOW);
+        analogWrite(INDICATOR_LED_1, map(TRAIN_SPEED, 0, SPEED_MAX, 0, 255));
+        digitalWrite(TRAIN_LED, (TRAIN_SPEED == SPEED_MAX) ? HIGH : LOW);
     }
 
     else if (state == STOP)
     {
         digitalWrite(INDICATOR_LED_0, LOW);
         digitalWrite(INDICATOR_LED_1, LOW);
-        digitalWrite(train_LEDS[current_train], LOW);
+        digitalWrite(TRAIN_LED, LOW);
     }
 
     else if (state == IDLE)
@@ -195,9 +184,9 @@ void indicatorLED(int state)
     else if (state == RUNNING)
         ;
     {
-        if (previous_train == -1 || trains[previous_train].speed == 0)
+        if (previous_train == -1 || trains[previous_train].speed() == 0)
             return;
-        digitalWrite(train_LEDS[previous_train], HIGH);
+        digitalWrite(TRAIN_LED, HIGH);
     }
 }
 
@@ -212,19 +201,15 @@ void eStop()
     // Set all trains' speeds to zero
     for (int i = 0; i < NUM_TRAINS; i++)
     {
-        digitalWrite(train_LEDS[i], LOW);
-        trains[i].speed = 0;
-        trains[i].direction = 1;
+        digitalWrite(trains[i].ledPin(), LOW);
+        trains[i].setSpeed(0);
+        trains[i].forward();
     }
 
     // Send stop command several times to ensure engines receive it
     for (int i = 0; i < 5; i++)
         for (Locomotive &train : trains)
-        {
-            char pdata[1];
-            pdata[0] = 'e'; // E-Stop
-            manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.address);
-        }
+            train.sendEStop();
 
     // Reset command is holding e-stop button continuously for the duration (2000 milliseconds)
     e_stop_timer = millis();
