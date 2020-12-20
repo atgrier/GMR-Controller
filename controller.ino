@@ -135,14 +135,14 @@ void loop()
             // Reverse
             if (current_encoder < 0)
             {
-                trains[current_train].direction = -1;
+                trains[current_train].reverse();
                 indicatorLED(REVERSE);
             }
 
             // Forwards
             else
             {
-                trains[current_train].direction = 1;
+                trains[current_train].forward();
                 indicatorLED(FORWARDS);
             }
         }
