@@ -152,8 +152,10 @@ void loop()
     // Create and send commands
     for (Locomotive& train : trains)
     {
-        char pdata[100];
-        sprintf(pdata, "<t 1 3 %d %d>", train.speed, train.direction);
+        char pdata[3];
+        pdata[0] = 't';  // Throttle
+        pdata[1] = train.speed;  // Speed
+        pdata[2] = train.direction;  // Direction
         manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
     }
 
@@ -245,8 +247,10 @@ void eStop()
     for (int i = 0; i < 5; i++)
         for (Locomotive& train : trains)
         {
-            char pdata[100];
-            sprintf(pdata, "<t 1 3 -1 1>");
+            char pdata[3];
+            pdata[0] = 't';  // Throttle
+            pdata[1] = -1;  // Speed
+            pdata[2] = 1;  // Direction
             manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
         }
 
