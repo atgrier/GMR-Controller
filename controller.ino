@@ -247,10 +247,8 @@ void eStop()
     for (int i = 0; i < 5; i++)
         for (Locomotive& train : trains)
         {
-            char pdata[3];
-            pdata[0] = 't';  // Throttle
-            pdata[1] = -1;  // Speed
-            pdata[2] = 1;  // Direction
+            char pdata[1];
+            pdata[0] = 'e';  // E-Stop
             manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
         }
 
