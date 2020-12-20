@@ -1,33 +1,9 @@
-#include <Arduino.h>
-#include <RHReliableDatagram.h>
-#include <RH_RF69.h>
-#include <Locomotive.h>
+/*
+  controller.ino
+  Created by Alan T. Grier, 23 September 2019.
+*/
+
 #include "controller.h"
-
-RH_RF69 driver(RFM69_CS, RFM69_INT);
-RHReliableDatagram manager(driver, CLIENT_ADDRESS);
-uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
-
-int encoder_val = 0;
-
-int current_train;
-int previous_train;
-bool push_button;
-bool encoder_button;
-uint32_t e_stop_timer;
-
-Locomotive trains[] = {
-    Locomotive(201),  // DB Steam
-    Locomotive(202),  // Great Norther Steam
-    Locomotive(203),  // RhB Ge 6/6 1 (Crocodile)
-    Locomotive(204)   // Stainz
-};
-
-int train_LEDS[] = {
-    TRAIN_LED_0,
-    TRAIN_LED_1,
-    TRAIN_LED_2,
-    TRAIN_LED_3};
 
 void setup()
 {
@@ -109,8 +85,7 @@ void loop()
         DISABLE_readEncoder;
         if (current_train != previous_train)
         {
-            encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed +
-                           SPEED_DEADZONE) * trains[current_train].direction;
+            encoder_val = (trains[current_train].speed == 0 ? 0 : trains[current_train].speed + SPEED_DEADZONE) * trains[current_train].direction;
             previous_train = current_train;
         }
 
@@ -150,18 +125,17 @@ void loop()
     }
 
     // Create and send commands
-    for (Locomotive& train : trains)
+    for (Locomotive &train : trains)
     {
         char pdata[3];
-        pdata[0] = 't';  // Throttle
-        pdata[1] = train.speed;  // Speed
-        pdata[2] = train.direction;  // Direction
-        manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
+        pdata[0] = 't';             // Throttle
+        pdata[1] = train.speed;     // Speed
+        pdata[2] = train.direction; // Direction
+        manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.address);
     }
 
     delay(100);
 }
-
 
 // Get the currently selected locomotive
 void getCurrentTrain()
@@ -181,7 +155,6 @@ void getCurrentTrain()
         indicatorLED(RUNNING);
     ENABLE_readEncoder;
 }
-
 
 // Set indicator LED
 void indicatorLED(int state)
@@ -219,13 +192,14 @@ void indicatorLED(int state)
         digitalWrite(INDICATOR_LED_1, HIGH);
     }
 
-    else if (state == RUNNING);
+    else if (state == RUNNING)
+        ;
     {
-        if (previous_train == -1 || trains[previous_train].speed == 0) return;
+        if (previous_train == -1 || trains[previous_train].speed == 0)
+            return;
         digitalWrite(train_LEDS[previous_train], HIGH);
     }
 }
-
 
 // Trigger E-Stop to stop all locomotives and idle until reset command recieved
 void eStop()
@@ -245,11 +219,11 @@ void eStop()
 
     // Send stop command several times to ensure engines receive it
     for (int i = 0; i < 5; i++)
-        for (Locomotive& train : trains)
+        for (Locomotive &train : trains)
         {
             char pdata[1];
-            pdata[0] = 'e';  // E-Stop
-            manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.ADDRESS);
+            pdata[0] = 'e'; // E-Stop
+            manager.sendto((uint8_t *)pdata, strlen(pdata) + 1, train.address);
         }
 
     // Reset command is holding e-stop button continuously for the duration (2000 milliseconds)
@@ -266,12 +240,12 @@ void eStop()
     ENABLE_readEncoder;
 }
 
-
 // Interrupt service routine to get updated encoder values
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
-    if (current_train < 0) return;
+    if (current_train < 0)
+        return;
 
     int val1 = digitalRead(ENCODER_IN_1);
     int val2 = digitalRead(ENCODER_IN_2);
@@ -280,7 +254,6 @@ void readEncoder()
     // Inside deadzone, traverse slower
     if (abs(encoder_val) <= SPEED_DEADZONE)
         change = max(change * SPEED_DEADZONE_MULT, 1);
-
 
     // Decrease value
     if (val1 != val2)
