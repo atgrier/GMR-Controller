@@ -40,8 +40,8 @@ void setup()
 
     // Initialize variables
     getCurrentTrain();
-    previous_train = current_train;
-    indicatorLED(STOP);
+    previous_train = trains.current_train();
+    trains.indicatorLED(STOP);
 
     // Enable interrupt
     attachInterrupt(1, readEncoder, CHANGE);
@@ -60,14 +60,14 @@ void loop()
     // previous_train = current_train;
     getCurrentTrain();
     Serial.print("Current Train: ");
-    Serial.println(current_train);
+    Serial.println(trains.current_train());
 
     // Get encoder button state
     encoder_button = !digitalRead(ENCODER_BUTTON);
 
-    // Invalid train selected (switch has 8 positions)
-    if (current_train == -1)
-        indicatorLED(IDLE);
+    // Invalid train selected (switch has 4 positions)
+    if (trains.current_train() == -1)
+        trains.indicatorLED(IDLE);
 
     // Valid train selected
     else
@@ -77,11 +77,11 @@ void loop()
         // If train is stopped, set encoder to zero
         // Otherwise set encoder to (speed + deadzone) * direction
         DISABLE_readEncoder;
-        if (current_train != previous_train)
+        if (trains.current_train() != previous_train)
         {
-            int current_speed = TRAIN_SPEED;
-            encoder_val = (current_speed == 0 ? 0 : current_speed + SPEED_DEADZONE) * TRAIN_DIRECTION;
-            previous_train = current_train;
+            int current_speed = trains.current_speed();
+            encoder_val = (current_speed == 0 ? 0 : current_speed + SPEED_DEADZONE) * trains.current_direction();
+            previous_train = trains.current_train();
         }
 
         // Get new speed and direction
@@ -92,36 +92,22 @@ void loop()
         // Inside deadzone, set speed to zero
         if (abs(current_encoder) < SPEED_DEADZONE + 1)
         {
-            trains[current_train].setSpeed(0);
-            trains[current_train].forward();
-            indicatorLED(STOP);
+            trains.setSpeed(0, FORWARDS);
+            trains.indicatorLED(STOP);
         }
 
         // Train is moving! Set the speed as abs(encoder) - deadzone
         else
         {
-            trains[current_train].setSpeed(GET_SPEED);
-
-            // Reverse
-            if (current_encoder < 0)
-            {
-                trains[current_train].reverse();
-                indicatorLED(REVERSE);
-            }
-
-            // Forwards
-            else
-            {
-                trains[current_train].forward();
-                indicatorLED(FORWARDS);
-            }
+            int state = current_encoder < 0 ? REVERSE : FORWARDS;
+            trains.setSpeed(GET_SPEED, state);
+            trains.indicatorLED(THROTTLE);
         }
         ENABLE_readEncoder;
     }
 
     // Create and send commands
-    for (Locomotive &train : trains)
-        train.sendThrottle();
+    trains.sendThrottles();
 
     delay(100);
 }
@@ -130,86 +116,24 @@ void loop()
 void getCurrentTrain()
 {
     DISABLE_readEncoder;
-    if (digitalRead(TRAIN_SELECTOR_0))
-        current_train = 0;
-    else if (digitalRead(TRAIN_SELECTOR_1))
-        current_train = 1;
-    else if (digitalRead(TRAIN_SELECTOR_2))
-        current_train = 2;
-    else if (digitalRead(TRAIN_SELECTOR_3))
-        current_train = 3;
-    else
-        current_train = -1;
-    if (current_train != previous_train)
-        indicatorLED(RUNNING);
+    trains.setCurrent(
+        digitalRead(TRAIN_LED_0) ? 0 : digitalRead(TRAIN_LED_1) ? 1 : digitalRead(TRAIN_LED_2) ? 2 : digitalRead(TRAIN_LED_3) ? 3 : -1);
+
+    if (trains.current_train() != previous_train)
+        trains.indicatorLED(RUNNING, previous_train);
     ENABLE_readEncoder;
-}
-
-// Set indicator LED
-void indicatorLED(int state)
-{
-    if (state == FORWARDS)
-    {
-        digitalWrite(INDICATOR_LED_1, LOW);
-        analogWrite(INDICATOR_LED_0, map(TRAIN_SPEED, 0, SPEED_MAX, 0, 255));
-        digitalWrite(TRAIN_LED, (TRAIN_SPEED == SPEED_MAX) ? HIGH : LOW);
-    }
-
-    else if (state == REVERSE)
-    {
-        digitalWrite(INDICATOR_LED_0, LOW);
-        analogWrite(INDICATOR_LED_1, map(TRAIN_SPEED, 0, SPEED_MAX, 0, 255));
-        digitalWrite(TRAIN_LED, (TRAIN_SPEED == SPEED_MAX) ? HIGH : LOW);
-    }
-
-    else if (state == STOP)
-    {
-        digitalWrite(INDICATOR_LED_0, LOW);
-        digitalWrite(INDICATOR_LED_1, LOW);
-        digitalWrite(TRAIN_LED, LOW);
-    }
-
-    else if (state == IDLE)
-    {
-        digitalWrite(INDICATOR_LED_0, LOW);
-        digitalWrite(INDICATOR_LED_1, LOW);
-    }
-
-    else if (state == WARNING)
-    {
-        digitalWrite(INDICATOR_LED_0, HIGH);
-        digitalWrite(INDICATOR_LED_1, HIGH);
-    }
-
-    else if (state == RUNNING)
-        ;
-    {
-        if (previous_train == -1 || trains[previous_train].speed() == 0)
-            return;
-        digitalWrite(TRAIN_LED, HIGH);
-    }
 }
 
 // Trigger E-Stop to stop all locomotives and idle until reset command recieved
 void eStop()
 {
     Serial.println("E Stopped");
-    indicatorLED(WARNING);
+    trains.indicatorLED(WARNING);
     DISABLE_readEncoder;
     previous_train = -1;
 
-    // Set all trains' speeds to zero
-    for (int i = 0; i < NUM_TRAINS; i++)
-    {
-        digitalWrite(trains[i].ledPin(), LOW);
-        trains[i].setSpeed(0);
-        trains[i].forward();
-    }
-
     // Send stop command several times to ensure engines receive it
-    for (int i = 0; i < 5; i++)
-        for (Locomotive &train : trains)
-            train.sendEStop();
+    trains.eStopAll();
 
     // Reset command is holding e-stop button continuously for the duration (2000 milliseconds)
     e_stop_timer = millis();
@@ -220,7 +144,7 @@ void eStop()
         delay(100);
     }
 
-    indicatorLED(IDLE);
+    trains.indicatorLED(IDLE);
     delay(1000);
     ENABLE_readEncoder;
 }
@@ -229,7 +153,7 @@ void eStop()
 // Should be triggered on `CHANGE`
 void readEncoder()
 {
-    if (current_train < 0)
+    if (trains.current_train() < 0)
         return;
 
     int val1 = digitalRead(ENCODER_IN_1);
@@ -238,7 +162,7 @@ void readEncoder()
 
     // Inside deadzone, traverse slower
     if (abs(encoder_val) <= SPEED_DEADZONE)
-        change = max(change * SPEED_DEADZONE_MULT, 1);
+        change = (int)fmax(change * SPEED_DEADZONE_MULT, 1);
 
     // Decrease value
     if (val1 != val2)

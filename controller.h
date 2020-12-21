@@ -4,9 +4,9 @@
 */
 
 #include <Arduino.h>
+#include <Locomotive.h>
 #include <RHReliableDatagram.h>
 #include <RH_RF69.h>
-#include <Locomotive.h>
 
 // Radio parameters
 #define CLIENT_ADDRESS 101 // Controller's address
@@ -38,14 +38,6 @@
 #define INDICATOR_LED_0 6
 #define INDICATOR_LED_1 9
 
-// Indicator LED states
-#define FORWARDS 0
-#define REVERSE 1
-#define STOP 2
-#define IDLE 3
-#define WARNING 4
-#define RUNNING 5
-
 // Encoder and speed parameters
 #define SPEED_CHANGE 2                           // Amount to change encoder for a single step
 #define SPEED_DEADZONE 5                         // Size of encoder deadzone when calculating speed, +/- from zero
@@ -61,11 +53,7 @@
 #define DISABLE_readEncoder (EIMSK &= ~(bit(INT1)))
 
 // Miscellaneous macros
-#define NUM_TRAINS ((int)(sizeof(trains) / sizeof(Locomotive)))
 #define GET_SPEED abs(current_encoder) < SPEED_DEADZONE ? 0 : abs(current_encoder) - 5
-#define TRAIN_SPEED trains[current_train].speed()
-#define TRAIN_DIRECTION trains[current_train].direction()
-#define TRAIN_LED trains[current_train].ledPin()
 
 // Radio initialization
 RH_RF69 driver(RFM69_CS, RFM69_INT);
@@ -74,16 +62,16 @@ uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 // Other initialization
 int encoder_val = 0;
-int current_train;
 int previous_train;
 bool push_button;
 bool encoder_button;
 uint32_t e_stop_timer;
 
-// List of all trains operated by this controller
-Locomotive trains[] = {
-    Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
-    Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
-    Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
-    Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
-};
+// Controller object with list of locomotives
+Controller trains = Controller(INDICATOR_LED_0, INDICATOR_LED_1, SPEED_MAX,
+                               {
+                                   Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
+                                   Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
+                                   Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
+                                   Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
+                               });
