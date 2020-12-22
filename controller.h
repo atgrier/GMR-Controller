@@ -68,10 +68,10 @@ bool encoder_button;
 uint32_t e_stop_timer;
 
 // Controller object with list of locomotives
-Controller trains = Controller(INDICATOR_LED_0, INDICATOR_LED_1, SPEED_MAX,
-                               {
-                                   Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
-                                   Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
-                                   Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
-                                   Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
-                               });
+Locomotive locomotives[] = {
+    Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
+    Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
+    Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
+    Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
+};
+Controller trains = Controller(INDICATOR_LED_0, INDICATOR_LED_1, SPEED_MAX, locomotives);
