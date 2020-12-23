@@ -7,7 +7,8 @@
                 "${workspaceRoot}",
                 "C:\\Program Files (x86)\\Arduino\\tools\\**",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",
-                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\circuitplay32u4",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\circuitplay32u4\\*",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\**",
                 "C:\\Users\\Alan\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\avr\\1.4.13\\**",
                 "C:\\Program Files (x86)\\Arduino\\libraries\\**",
                 "C:\\Users\\Alan\\Google Drive\\Documents\\Arduino\\libraries\\**"
