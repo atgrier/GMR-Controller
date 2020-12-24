@@ -28,15 +28,9 @@ void setup()
     pinMode(TRAIN_SELECTOR_1, INPUT);
     pinMode(TRAIN_SELECTOR_2, INPUT);
     pinMode(TRAIN_SELECTOR_3, INPUT);
-    pinMode(TRAIN_LED_0, OUTPUT);
-    pinMode(TRAIN_LED_1, OUTPUT);
-    pinMode(TRAIN_LED_2, OUTPUT);
-    pinMode(TRAIN_LED_3, OUTPUT);
 
     // Push Button / Indicator LED
     pinMode(BUTTON_PUSH, INPUT_PULLUP);
-    pinMode(LED_INDICATOR_0, OUTPUT);
-    pinMode(LED_INDICATOR_1, OUTPUT);
 
     // Initialize variables
     getCurrentTrain();
