@@ -19,7 +19,7 @@ void setup()
     //manager.setRetries(0);
 
     // Speed Control Encoder
-    pinMode(ENCODER_BUTTON, INPUT_PULLUP);
+    pinMode(BUTTON_ENCODER, INPUT_PULLUP);
     pinMode(ENCODER_IN_1, INPUT_PULLUP);
     pinMode(ENCODER_IN_2, INPUT_PULLUP);
 
@@ -34,9 +34,9 @@ void setup()
     pinMode(TRAIN_LED_3, OUTPUT);
 
     // Push Button / Indicator LED
-    pinMode(PUSH_BUTTON, INPUT_PULLUP);
-    pinMode(INDICATOR_LED_0, OUTPUT);
-    pinMode(INDICATOR_LED_1, OUTPUT);
+    pinMode(BUTTON_PUSH, INPUT_PULLUP);
+    pinMode(LED_INDICATOR_0, OUTPUT);
+    pinMode(LED_INDICATOR_1, OUTPUT);
 
     // Initialize variables
     getCurrentTrain();
@@ -50,7 +50,7 @@ void setup()
 void loop()
 {
     // Get push button state
-    push_button = !digitalRead(PUSH_BUTTON);
+    push_button = !digitalRead(BUTTON_PUSH);
 
     // E-Stop trains, and reset speeds to zero
     if (push_button)
@@ -63,53 +63,54 @@ void loop()
     Serial.println(trains.current_train());
 
     // Get encoder button state
-    encoder_button = !digitalRead(ENCODER_BUTTON);
+    encoder_button = !digitalRead(BUTTON_ENCODER);
 
-    // Invalid train selected (switch has 4 positions)
-    if (trains.current_train() == -1)
-        trains.indicatorLED(IDLE);
-
-    // Valid train selected
-    else
-    {
-        // If the selected train has changed, update encoder value based on speed of newly
-        // selected train.
-        // If train is stopped, set encoder to zero
-        // Otherwise set encoder to (speed + deadzone) * direction
-        DISABLE_readEncoder;
-        if (trains.current_train() != previous_train)
-        {
-            int current_speed = trains.current_speed();
-            encoder_val = (current_speed == 0 ? 0 : current_speed + SPEED_DEADZONE) * trains.current_direction();
-            previous_train = trains.current_train();
-        }
-
-        // Get new speed and direction
-        int current_encoder = encoder_val;
-        Serial.print("Current Speed: ");
-        Serial.println(current_encoder);
-
-        // Inside deadzone, set speed to zero
-        if (abs(current_encoder) < SPEED_DEADZONE + 1)
-        {
-            trains.setSpeed(0, FORWARDS);
-            trains.indicatorLED(STOP);
-        }
-
-        // Train is moving! Set the speed as abs(encoder) - deadzone
-        else
-        {
-            int state = current_encoder < 0 ? REVERSE : FORWARDS;
-            trains.setSpeed(GET_SPEED, state);
-            trains.indicatorLED(THROTTLE);
-        }
-        ENABLE_readEncoder;
-    }
+    // Change locomotive's speed based on updated encoder value
+    update_locomotive_speed();
 
     // Create and send commands
     trains.sendThrottles();
 
+    // Wait 100 ms, since loop doesn't need to run as fast as possible
     delay(100);
+}
+
+void update_locomotive_speed()
+{
+    if (trains.current_train() != -1) // Invalid locomotive selected
+        return;
+
+    DISABLE_readEncoder;
+    // If the selected train has changed, update encoder value based on speed of newly selected train.
+    // If train is stopped, set encoder to zero
+    // Otherwise set encoder to (speed + deadzone) * direction
+    if (trains.current_train() != previous_train)
+    {
+        int current_speed = trains.current_speed();
+        encoder_val = (current_speed == 0 ? 0 : current_speed + SPEED_DEADZONE) * trains.current_direction();
+        previous_train = trains.current_train();
+    }
+
+    // Get new speed and direction
+    int current_encoder = encoder_val;
+    Serial.print("Current Speed: ");
+    Serial.println(current_encoder);
+
+    // Inside deadzone, set speed to zero
+    if (abs(current_encoder) < SPEED_DEADZONE + 1)
+    {
+        trains.setSpeed(0, FORWARDS);
+        trains.indicatorLED(STOP);
+    }
+
+    // Train is moving! Set the speed as abs(encoder) - deadzone
+    else
+    {
+        int state = current_encoder < 0 ? REVERSE : FORWARDS;
+        trains.setSpeed(GET_SPEED, state);
+        trains.indicatorLED(THROTTLE);
+    }
+    ENABLE_readEncoder;
 }
 
 // Get the currently selected locomotive
@@ -122,6 +123,10 @@ void getCurrentTrain()
     if (trains.current_train() != previous_train)
         trains.indicatorLED(RUNNING, previous_train);
     ENABLE_readEncoder;
+
+    // Invalid train selected (switch has 4 positions)
+    if (trains.current_train() == -1)
+        trains.indicatorLED(IDLE);
 }
 
 // Trigger E-Stop to stop all locomotives and idle until reset command recieved
@@ -139,7 +144,7 @@ void eStop()
     e_stop_timer = millis();
     while (millis() - e_stop_timer < ESTOP_DURATION)
     {
-        if (digitalRead(PUSH_BUTTON))
+        if (digitalRead(BUTTON_PUSH))
             e_stop_timer = millis();
         delay(100);
     }

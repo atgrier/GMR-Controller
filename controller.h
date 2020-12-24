@@ -15,7 +15,7 @@
 #define RFM69_INT 7
 
 // Rotary encoder inputs
-#define ENCODER_BUTTON A4
+#define BUTTON_ENCODER A4
 #define ENCODER_IN_1 2
 #define ENCODER_IN_2 3
 
@@ -32,11 +32,11 @@
 #define TRAIN_SELECTOR_3 A2
 
 // Push button input
-#define PUSH_BUTTON A5
+#define BUTTON_PUSH A5
 
 // Red/Blue indicator LED outputs
-#define INDICATOR_LED_0 6
-#define INDICATOR_LED_1 9
+#define LED_INDICATOR_0 6
+#define LED_INDICATOR_1 9
 
 // Encoder and speed parameters
 #define SPEED_CHANGE 2                           // Amount to change encoder for a single step
@@ -74,4 +74,4 @@ Locomotive locomotives[] = {
     Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
     Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
 };
-Controller trains = Controller(INDICATOR_LED_0, INDICATOR_LED_1, SPEED_MAX, locomotives);
+Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, locomotives);
