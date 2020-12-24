@@ -48,6 +48,12 @@
 // Button push time required (milliseconds) to leave e-stop mode
 #define ESTOP_DURATION 2000
 
+// Trick VS Code into understanding that EIMSK and INT1 are valid identifiers
+#ifndef EIMSK
+  int EIMSK = 0;
+  int INT1 = 0;
+#endif
+
 // Interrupt control
 #define ENABLE_readEncoder (EIMSK |= bit(INT1))
 #define DISABLE_readEncoder (EIMSK &= ~(bit(INT1)))
