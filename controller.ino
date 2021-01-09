@@ -71,7 +71,7 @@ void loop()
 
 void update_locomotive_speed()
 {
-    if (trains.current_train() != -1) // Invalid locomotive selected
+    if (trains.current_train() == -1) // Invalid locomotive selected
         return;
 
     DISABLE_readEncoder;
