@@ -112,7 +112,7 @@ void getCurrentTrain()
 {
     DISABLE_readEncoder;
     trains.setCurrent(
-        digitalRead(TRAIN_LED_0) ? 0 : digitalRead(TRAIN_LED_1) ? 1 : digitalRead(TRAIN_LED_2) ? 2 : digitalRead(TRAIN_LED_3) ? 3 : -1);
+        digitalRead(TRAIN_SELECTOR_0) ? 0 : digitalRead(TRAIN_SELECTOR_1) ? 1 : digitalRead(TRAIN_SELECTOR_2) ? 2 : digitalRead(TRAIN_SELECTOR_3) ? 3 : -1);
 
     if (trains.current_train() != previous_train)
         trains.indicatorLED(RUNNING, previous_train);
