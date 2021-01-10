@@ -39,10 +39,10 @@
 #define LED_INDICATOR_1 9
 
 // Encoder and speed parameters
-#define SPEED_CHANGE 2                           // Amount to change encoder for a single step
-#define SPEED_DEADZONE 5                         // Size of encoder deadzone when calculating speed, +/- from zero
-#define SPEED_DEADZONE_MULT 0.5                  // Modify how much each step changes encoder value in deadzone
-#define SPEED_MAX 126                            // Maximum speed (parameter of motor controller or DCC decoder)
+#define SPEED_CHANGE 2							 // Amount to change encoder for a single step
+#define SPEED_DEADZONE 5						 // Size of encoder deadzone when calculating speed, +/- from zero
+#define SPEED_DEADZONE_MULT 0.5					 // Modify how much each step changes encoder value in deadzone
+#define SPEED_MAX 126							 // Maximum speed (parameter of motor controller or DCC decoder)
 #define ENCODER_MAX (SPEED_MAX + SPEED_DEADZONE) // Maximum encoder value
 
 // Button push time required (milliseconds) to leave e-stop mode
@@ -75,9 +75,11 @@ uint32_t e_stop_timer;
 
 // Controller object with list of locomotives
 Locomotive locomotives[] = {
-    Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
-    Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
-    Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
-    Locomotive(204, TRAIN_LED_3, &manager)  // Stainz
+	Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
+	Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
+	Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
+	Locomotive(204, TRAIN_LED_3, &manager)	// Stainz
 };
-Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, locomotives);
+const int num_locomotives = (int)(sizeof(locomotives) / sizeof(Locomotive));
+Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, num_locomotives,
+							   locomotives);
