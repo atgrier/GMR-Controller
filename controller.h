@@ -9,7 +9,7 @@
 #include <RH_RF69.h>
 
 // Radio parameters
-#define CLIENT_ADDRESS 101 // Controller's address
+#define CONTROLLER_ADDRESS 101 // Controller's address
 #define RF69_FREQ 868.0
 #define RFM69_CS 8
 #define RFM69_INT 7
@@ -63,7 +63,7 @@
 
 // Radio initialization
 RH_RF69 driver(RFM69_CS, RFM69_INT);
-RHReliableDatagram manager(driver, CLIENT_ADDRESS);
+RHReliableDatagram manager(driver, CONTROLLER_ADDRESS);
 uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 // Other initialization
