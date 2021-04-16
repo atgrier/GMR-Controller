@@ -9,7 +9,6 @@ void setup()
 {
     // Radio Module
     Serial.begin(115200);
-    manager.init();
     driver.setFrequency(RF69_FREQ);
     driver.setTxPower(20, true);
     uint8_t key[] = {0xa, 0xb, 0xa, 0xd, 0xc, 0xa, 0xf, 0xe,

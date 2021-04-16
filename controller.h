@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 #include <Locomotive.h>
-#include <RHDatagram.h>
+#include <Radio.h>
 #include <RH_RF69.h>
 
 // Radio parameters
@@ -63,7 +63,7 @@
 
 // Radio initialization
 RH_RF69 driver(RFM69_CS, RFM69_INT);
-RHDatagram manager(driver, CONTROLLER_ADDRESS);
+Radio radio(CONTROLLER_ADDRESS, &driver);
 uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 // Other initialization
@@ -75,10 +75,10 @@ uint32_t e_stop_timer;
 
 // Controller object with list of locomotives
 Locomotive locomotives[] = {
-	Locomotive(201, TRAIN_LED_0, &manager), // DB Steam
-	Locomotive(202, TRAIN_LED_1, &manager), // Great Norther Steam
-	Locomotive(203, TRAIN_LED_2, &manager), // RhB Ge 6/6 1 (Crocodile)
-	Locomotive(204, TRAIN_LED_3, &manager)	// Stainz
+	Locomotive(201, TRAIN_LED_0, &radio), // DB Steam
+	Locomotive(202, TRAIN_LED_1, &radio), // Great Norther Steam
+	Locomotive(203, TRAIN_LED_2, &radio), // RhB Ge 6/6 1 (Crocodile)
+	Locomotive(204, TRAIN_LED_3, &radio)	// Stainz
 };
 const int num_locomotives = (int)(sizeof(locomotives) / sizeof(Locomotive));
 Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, num_locomotives,
