@@ -15,8 +15,6 @@ void setup()
     uint8_t key[] = {0xa, 0xb, 0xa, 0xd, 0xc, 0xa, 0xf, 0xe,
                      0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf};
     driver.setEncryptionKey(key);
-    manager.setTimeout(50);
-    //manager.setRetries(0);
 
     // Speed Control Encoder
     pinMode(BUTTON_ENCODER, INPUT_PULLUP);
