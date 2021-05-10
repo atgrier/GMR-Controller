@@ -10,18 +10,18 @@ void setup()
   // Radio Module
   Serial.begin(115200);
 
-  pinMode(RFM69_RST, OUTPUT);
-  digitalWrite(RFM69_RST, HIGH);
-  delay(10);
-  digitalWrite(RFM69_RST, LOW);
-  delay(10);
+  // pinMode(RFM69_RST, OUTPUT);
+  // digitalWrite(RFM69_RST, HIGH);
+  // delay(10);
+  // digitalWrite(RFM69_RST, LOW);
+  // delay(10);
 
-  // driver.init();
-  driver.setFrequency(RF69_FREQ);
-  driver.setTxPower(20, true);
-  uint8_t key[] = {0xa, 0xb, 0xa, 0xd, 0xc, 0xa, 0xf, 0xe,
-                    0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf};
-  driver.setEncryptionKey(key);
+  driver.init();
+  // driver.setFrequency(RF69_FREQ);
+  // driver.setTxPower(20, true);
+  // uint8_t key[] = {0xa, 0xb, 0xa, 0xd, 0xc, 0xa, 0xf, 0xe,
+  //                   0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf};
+  // driver.setEncryptionKey(key);
 
   // Speed Control Encoder
 //  pinMode(BUTTON_ENCODER, INPUT_PULLUP);
