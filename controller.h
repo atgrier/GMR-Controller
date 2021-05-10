@@ -4,15 +4,18 @@
 */
 
 #include <Arduino.h>
-#include <Locomotive.h>
+// #include <Locomotive.h>
 #include <Radio.h>
 #include <RH_RF69.h>
+// #include <RFM69.h>
 
 // Radio parameters
 #define CONTROLLER_ADDRESS 101 // Controller's address
 #define RF69_FREQ 868.0
+// #define RF69_ENCRYPTION "abadcafedeadbeef"
 #define RFM69_CS 8
 #define RFM69_INT 7
+#define RFM69_RST 4
 
 // Rotary encoder inputs
 #define BUTTON_ENCODER A4
@@ -48,12 +51,6 @@
 // Button push time required (milliseconds) to leave e-stop mode
 #define ESTOP_DURATION 2000
 
-// Trick VS Code into understanding that EIMSK and INT1 are valid identifiers
-#ifndef EIMSK
-int EIMSK = 0;
-int INT1 = 0;
-#endif
-
 // Interrupt control
 #define ENABLE_readEncoder (EIMSK |= bit(INT1))
 #define DISABLE_readEncoder (EIMSK &= ~(bit(INT1)))
@@ -63,8 +60,9 @@ int INT1 = 0;
 
 // Radio initialization
 RH_RF69 driver(RFM69_CS, RFM69_INT);
+// RFM69 driver();
 Radio radio(CONTROLLER_ADDRESS, &driver);
-uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
+// uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 // Other initialization
 int encoder_val = 0;
@@ -74,19 +72,19 @@ bool encoder_button;
 uint32_t e_stop_timer;
 
 // Controller object with list of locomotives
-Locomotive locomotives[] = {
-		Locomotive(201, TRAIN_LED_0, &radio), // DB Steam
-		Locomotive(202, TRAIN_LED_1, &radio), // Great Norther Steam
-		Locomotive(203, TRAIN_LED_2, &radio), // RhB Ge 6/6 1 (Crocodile)
-		Locomotive(204, TRAIN_LED_3, &radio)	// Stainz
-};
-const int num_locomotives = (int)(sizeof(locomotives) / sizeof(Locomotive));
-Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, num_locomotives,
-															 locomotives);
+// Locomotive locomotives[] = {
+// 		Locomotive(201, TRAIN_LED_0, &radio), // DB Steam
+// 		Locomotive(202, TRAIN_LED_1, &radio), // Great Norther Steam
+// 		Locomotive(203, TRAIN_LED_2, &radio), // RhB Ge 6/6 1 (Crocodile)
+// 		Locomotive(204, TRAIN_LED_3, &radio)	// Stainz
+// };
+// const int num_locomotives = (int)(sizeof(locomotives) / sizeof(Locomotive));
+// Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, num_locomotives,
+// 															 locomotives);
 
 void setup();
 void loop();
-void update_locomotive_speed();
-void getCurrentTrain();
-void eStop();
-void readEncoder();
+//void update_locomotive_speed();
+//void getCurrentTrain();
+//void eStop();
+//void readEncoder();
