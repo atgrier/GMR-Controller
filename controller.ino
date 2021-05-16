@@ -7,7 +7,7 @@
 
 void setup()
 {
-  // Radio Module
+  // Initialize radio
   Serial.begin(115200);
   radio.init(RF69_FREQ, RF69_KEY);
 
