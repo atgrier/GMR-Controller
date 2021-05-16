@@ -5,62 +5,6 @@
 
 #include "controller.h"
 
-void setup()
-{
-  // Initialize radio
-  Serial.begin(115200);
-  radio.init(RF69_FREQ, RF69_KEY);
-
-  // Speed Control Encoder
-  pinMode(BUTTON_ENCODER, INPUT_PULLUP);
-  pinMode(ENCODER_IN_1, INPUT_PULLUP);
-  pinMode(ENCODER_IN_2, INPUT_PULLUP);
-
-  // Train Selector
-  pinMode(TRAIN_SELECTOR_0, INPUT);
-  pinMode(TRAIN_SELECTOR_1, INPUT);
-  pinMode(TRAIN_SELECTOR_2, INPUT);
-  pinMode(TRAIN_SELECTOR_3, INPUT);
-
-  // Push Button / Indicator LED
-  pinMode(BUTTON_PUSH, INPUT_PULLUP);
-
-  // Initialize variables
-  getCurrentTrain();
-  previous_train = trains.current_train();
-  trains.indicatorLED(STOP);
-
-  // Enable interrupt
-  attachInterrupt(1, readEncoder, CHANGE);
-}
-
-void loop()
-{
- // Get push button state
- push_button = !digitalRead(BUTTON_PUSH);
-
- // E-Stop trains, and reset speeds to zero
- if (push_button)
-   eStop();
-
- // Get selected train
- getCurrentTrain();
- Serial.print("Current Train: ");
- Serial.println(trains.current_train());
-
- // Get encoder button state
- encoder_button = !digitalRead(BUTTON_ENCODER);
-
- // Change locomotive's speed based on updated encoder value
- update_locomotive_speed();
-
- // Create and send commands
- trains.sendThrottles();
-
- // Wait 100 ms, since loop doesn't need to run as fast as possible
- delay(100);
-}
-
 void update_locomotive_speed()
 {
  if (trains.current_train() == -1) // Invalid locomotive selected
@@ -175,4 +119,60 @@ void readEncoder()
    if (encoder_val > ENCODER_MAX)
      encoder_val = ENCODER_MAX;
  }
+}
+
+void setup()
+{
+  // Initialize radio
+  Serial.begin(115200);
+  radio.init(RF69_FREQ, RF69_KEY);
+
+  // Speed Control Encoder
+  pinMode(BUTTON_ENCODER, INPUT_PULLUP);
+  pinMode(ENCODER_IN_1, INPUT_PULLUP);
+  pinMode(ENCODER_IN_2, INPUT_PULLUP);
+
+  // Train Selector
+  pinMode(TRAIN_SELECTOR_0, INPUT);
+  pinMode(TRAIN_SELECTOR_1, INPUT);
+  pinMode(TRAIN_SELECTOR_2, INPUT);
+  pinMode(TRAIN_SELECTOR_3, INPUT);
+
+  // Push Button / Indicator LED
+  pinMode(BUTTON_PUSH, INPUT_PULLUP);
+
+  // Initialize variables
+  getCurrentTrain();
+  previous_train = trains.current_train();
+  trains.indicatorLED(STOP);
+
+  // Enable interrupt
+  attachInterrupt(1, readEncoder, CHANGE);
+}
+
+void loop()
+{
+ // Get push button state
+ push_button = !digitalRead(BUTTON_PUSH);
+
+ // E-Stop trains, and reset speeds to zero
+ if (push_button)
+   eStop();
+
+ // Get selected train
+ getCurrentTrain();
+ Serial.print("Current Train: ");
+ Serial.println(trains.current_train());
+
+ // Get encoder button state
+ encoder_button = !digitalRead(BUTTON_ENCODER);
+
+ // Change locomotive's speed based on updated encoder value
+ update_locomotive_speed();
+
+ // Create and send commands
+ trains.sendThrottles();
+
+ // Wait 100 ms, since loop doesn't need to run as fast as possible
+ delay(100);
 }

@@ -81,7 +81,7 @@ Locomotive locomotives[] = {
 		Locomotive(201, TRAIN_LED_0, &radio), // DB Steam
 		Locomotive(202, TRAIN_LED_1, &radio), // Great Norther Steam
 		Locomotive(203, TRAIN_LED_2, &radio), // RhB Ge 6/6 1 (Crocodile)
-		Locomotive(204, TRAIN_LED_3, &radio)	// Stainz
+		Locomotive(204, TRAIN_LED_3, &radio)  // Stainz
 };
 const int num_locomotives = (int)(sizeof(locomotives) / sizeof(Locomotive));
 Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, num_locomotives,
