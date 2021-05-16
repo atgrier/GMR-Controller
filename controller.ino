@@ -9,13 +9,7 @@ void setup()
 {
   // Radio Module
   Serial.begin(115200);
-  radio.init();
-
-  driver.setFrequency(RF69_FREQ);
-  driver.setTxPower(20, true);
-  uint8_t key[] = {0xa, 0xb, 0xa, 0xd, 0xc, 0xa, 0xf, 0xe,
-                    0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf};
-  driver.setEncryptionKey(key);
+  radio.init(RF69_FREQ, RF69_KEY);
 
   // Speed Control Encoder
   pinMode(BUTTON_ENCODER, INPUT_PULLUP);
