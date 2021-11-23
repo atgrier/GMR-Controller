@@ -1,6 +1,0 @@
-{
-    "board": "adafruit:avr:feather32u4",
-    "sketch": "controller.ino",
-    "port": "COM7",
-    "output": "build\\"
-}
