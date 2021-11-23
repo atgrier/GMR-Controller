@@ -9,10 +9,8 @@
 #include <RH_RF69.h>
 
 // Radio parameters
-#define CONTROLLER_ADDRESS 101 // Controller's address
+#define CONTROLLER_ADDRESS 1 // Controller's address
 #define RF69_FREQ 868.0
-#define RF69_KEY new uint8_t [16] {0xa, 0xb, 0xa, 0xd, 0xc, 0xa, 0xf, 0xe, \
-								   0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf}
 #define RFM69_CS 8
 #define RFM69_INT 7
 #define RFM69_RST 4
@@ -78,10 +76,10 @@ uint32_t e_stop_timer;
 
 // Controller object with list of locomotives
 Locomotive locomotives[] = {
-		Locomotive(201, TRAIN_LED_0, &radio), // DB Steam
-		Locomotive(202, TRAIN_LED_1, &radio), // Great Norther Steam
-		Locomotive(203, TRAIN_LED_2, &radio), // RhB Ge 6/6 1 (Crocodile)
-		Locomotive(204, TRAIN_LED_3, &radio)  // Stainz
+		Locomotive(21, TRAIN_LED_0, &radio), // DB Steam
+		Locomotive(22, TRAIN_LED_1, &radio), // Great Norther Steam
+		Locomotive(23, TRAIN_LED_2, &radio), // RhB Ge 6/6 1 (Crocodile)
+		Locomotive(24, TRAIN_LED_3, &radio)  // Stainz
 };
 const int num_locomotives = (int)(sizeof(locomotives) / sizeof(Locomotive));
 Controller trains = Controller(LED_INDICATOR_0, LED_INDICATOR_1, SPEED_MAX, num_locomotives,
