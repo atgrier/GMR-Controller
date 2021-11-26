@@ -29,14 +29,14 @@ void update_locomotive_speed()
  // Inside deadzone, set speed to zero
  if (abs(current_encoder) < SPEED_DEADZONE + 1)
  {
-   trains.setSpeed(0, FORWARDS);
+   trains.setSpeed(0, FORWARD);
    trains.indicatorLED(STOP);
  }
 
  // Train is moving! Set the speed as abs(encoder) - deadzone
  else
  {
-   int state = current_encoder < 0 ? REVERSE : FORWARDS;
+   int state = current_encoder < 0 ? REVERSE : FORWARD;
    trains.setSpeed(GET_SPEED, state);
    trains.indicatorLED(THROTTLE);
  }
